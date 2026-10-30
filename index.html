@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>스탑워치 - Shanghai Night</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%;
+    font-family: 'Segoe UI', 'Pretendard', sans-serif;
+  }
+  body {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 24px 0;
+  }
+
+  /* ===================== SCENE ===================== */
+  .scene {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background: linear-gradient(180deg,
+      #060316 0%, #0c0a2e 18%, #241047 38%, #4a1856 55%,
+      #8c2d5e 72%, #c9496a 85%, #e97856 100%);
+    overflow: hidden;
+  }
+
+  .haze {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 80% 40% at 50% 100%, rgba(255,140,120,0.35), transparent 70%);
+    animation: hazeBreathe 7s ease-in-out infinite;
+  }
+  @keyframes hazeBreathe { 0%,100% { opacity: 0.6; } 50% { opacity: 1; } }
+
+  .moonglow {
+    position: absolute; top: 6%; left: 70%;
+    width: 160px; height: 160px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,245,220,0.9), rgba(255,220,180,0.25) 45%, transparent 75%);
+    filter: blur(2px);
+    animation: moonPulse 6s ease-in-out infinite;
+  }
+  @keyframes moonPulse { 0%,100% { opacity: 0.75; transform: scale(1); } 50% { opacity: 1; transform: scale(1.06); } }
+
+  .stars {
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 8% 12%, #fff, transparent),
+      radial-gradient(1px 1px at 18% 6%, #fff, transparent),
+      radial-gradient(1px 1px at 33% 18%, #fff, transparent),
+      radial-gradient(1px 1px at 48% 8%, #fff, transparent),
+      radial-gradient(1px 1px at 58% 22%, #fff, transparent),
+      radial-gradient(1px 1px at 82% 10%, #fff, transparent),
+      radial-gradient(1px 1px at 92% 26%, #fff, transparent),
+      radial-gradient(1px 1px at 4% 30%, #fff, transparent),
+      radial-gradient(1px 1px at 65% 4%, #fff, transparent);
+    animation: starTwinkle 3s ease-in-out infinite alternate;
+  }
+  @keyframes starTwinkle { 0% { opacity: 0.4; } 100% { opacity: 1; } }
+
+  .clouds { position: absolute; inset: 0; }
+  .cloud {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(14px);
+    opacity: 0.25;
+    background: linear-gradient(90deg, rgba(255,200,210,0.5), rgba(180,140,220,0.3));
+  }
+  .cloud.c1 { width: 320px; height: 60px; top: 12%; left: -20%; animation: driftRight 55s linear infinite; }
+  .cloud.c2 { width: 240px; height: 46px; top: 22%; left: -30%; animation: driftRight 75s linear infinite; animation-delay: -20s; }
+  .cloud.c3 { width: 400px; height: 70px; top: 6%; left: -40%; animation: driftRight 95s linear infinite; animation-delay: -45s; }
+  @keyframes driftRight { from { transform: translateX(0); } to { transform: translateX(160vw); } }
+
+  /* ===================== SKYLINE ===================== */
+  .skyline-wrap {
+    position: absolute;
+    bottom: 24vh;
+    left: 0; width: 100%; height: 42vh;
+    -webkit-box-reflect: below 2px linear-gradient(to bottom, rgba(255,255,255,0.22), transparent 55%);
+  }
+
+  .skyline-far {
+    position: absolute; bottom: 0; left: 0; width: 100%; height: 70%;
+    background: linear-gradient(180deg, transparent, rgba(20,15,45,0.5));
+  }
+  .skyline-far .b {
+    position: absolute; bottom: 0;
+    background: #1c1333;
+    opacity: 0.75;
+  }
+
+  #midBuildings { position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; }
+  .building {
+    position: absolute; bottom: 0;
+    background-color: #0c0720;
+    background-image:
+      repeating-linear-gradient(0deg, transparent 0 5px, rgba(255,214,150,0.35) 5px 7px),
+      repeating-linear-gradient(90deg, transparent 0 5px, rgba(255,214,150,0.35) 5px 7px);
+    box-shadow: 0 0 18px rgba(255,150,180,0.08);
+    animation: winTwinkle 5s ease-in-out infinite;
+  }
+  @keyframes winTwinkle { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.45); } }
+
+  .towers { position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; }
+
+  .beacon-light {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: beaconSpin 4s linear infinite;
+  }
+  @keyframes beaconSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+  .tower-glow { animation: towerPulse 3.4s ease-in-out infinite; }
+  @keyframes towerPulse {
+    0%,100% { filter: drop-shadow(0 0 6px rgba(255,120,180,0.55)) drop-shadow(0 0 14px rgba(100,180,255,0.35)); }
+    50% { filter: drop-shadow(0 0 14px rgba(255,120,180,0.9)) drop-shadow(0 0 26px rgba(100,180,255,0.6)); }
+  }
+
+  /* ===================== RIVER ===================== */
+  .river {
+    position: absolute; bottom: 0; left: 0; width: 100%; height: 24vh;
+    background: linear-gradient(180deg, rgba(10,4,24,0.4), rgba(4,2,12,0.92));
+    overflow: hidden;
+  }
+  .river-shimmer {
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(100deg,
+      rgba(255,140,190,0.10) 0 2px, transparent 2px 40px,
+      rgba(100,190,255,0.10) 40px 42px, transparent 42px 90px);
+    animation: shimmerMove 6s linear infinite;
+    mix-blend-mode: screen;
+  }
+  @keyframes shimmerMove { from { background-position: 0 0; } to { background-position: -400px 0; } }
+
+  .boat-light {
+    position: absolute;
+    width: 5px; height: 5px; border-radius: 50%;
+    background: #ffe0b0;
+    box-shadow: 0 0 8px 2px rgba(255,210,150,0.8);
+    animation: boatDrift linear infinite;
+  }
+  @keyframes boatDrift {
+    from { transform: translateX(-20px); opacity: 0; }
+    10%, 90% { opacity: 1; }
+    to { transform: translateX(calc(100vw + 20px)); opacity: 0; }
+  }
+
+  /* ===================== PARTICLES ===================== */
+  .particle {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 225, 190, 0.85);
+    box-shadow: 0 0 6px 2px rgba(255,200,160,0.6);
+    animation: floatUp linear infinite;
+  }
+  @keyframes floatUp {
+    0% { transform: translateY(0) translateX(0); opacity: 0; }
+    10% { opacity: 0.9; }
+    90% { opacity: 0.4; }
+    100% { transform: translateY(-110vh) translateX(20px); opacity: 0; }
+  }
+
+  /* ===================== CONTENT (배경에 녹아드는 영역) ===================== */
+  .content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    color: #fff;
+    padding: 36px 30px 30px;
+  }
+  /* 사각 카드 없이, 콘텐츠 영역에만 맞춰 번지듯 퍼지는 글로우 — 랩이 늘어나도 항상 함께 커진다 */
+  .content::before {
+    content: '';
+    position: absolute;
+    inset: -10px;
+    z-index: -1;
+    background: radial-gradient(circle, rgba(8,4,20,0.8) 0%, rgba(10,5,25,0.6) 45%, rgba(10,5,25,0) 85%);
+    backdrop-filter: blur(6px);
+    -webkit-mask-image: radial-gradient(circle, black 55%, transparent 95%);
+    mask-image: radial-gradient(circle, black 55%, transparent 95%);
+    pointer-events: none;
+  }
+
+  .city-label {
+    font-size: 0.78rem;
+    letter-spacing: 4px;
+    color: #ffd9ec;
+    opacity: 0.8;
+    margin-bottom: 14px;
+    text-transform: uppercase;
+    text-shadow: 0 0 10px rgba(255,150,210,0.6);
+  }
+
+  .time-wrap {
+    position: relative;
+    width: clamp(200px, 60vw, 260px);
+    height: clamp(200px, 60vw, 260px);
+    margin: 0 auto 28px;
+  }
+  .ring-svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+  .ring-track { fill: none; stroke: rgba(255,255,255,0.12); stroke-width: 3; }
+  .ring-progress {
+    fill: none;
+    stroke: url(#ringGrad);
+    stroke-width: 4;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.05s linear;
+    filter: drop-shadow(0 0 6px rgba(255,120,180,0.8));
+  }
+  .ring-dot {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #fff7ec;
+    box-shadow: 0 0 10px 3px rgba(255,200,230,0.9);
+    margin: -5px 0 0 -5px;
+    transform-origin: center;
+  }
+
+  .time {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    font-size: clamp(1.9rem, 7vw, 2.5rem);
+    font-weight: 700;
+    letter-spacing: 1px;
+    font-variant-numeric: tabular-nums;
+    color: #fff;
+    text-shadow:
+      0 0 10px rgba(255,150,210,0.75),
+      0 0 24px rgba(120,190,255,0.45);
+  }
+  .time .ms { font-size: 0.52em; color: #ffc9e6; margin-top: 2px; }
+
+  .buttons {
+    display: flex;
+    gap: clamp(8px, 2.5vw, 16px);
+    justify-content: center;
+    margin-bottom: 18px;
+  }
+
+  .hint {
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.45);
+    letter-spacing: 1px;
+    margin-bottom: 22px;
+  }
+  .hint kbd {
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 0.68rem;
+  }
+
+  button {
+    border: 2px solid transparent;
+    border-radius: 50px;
+    padding: 15px clamp(14px, 4vw, 26px);
+    font-size: clamp(0.88rem, 3vw, 1.02rem);
+    font-weight: 600;
+    cursor: pointer;
+    min-width: clamp(68px, 20vw, 90px);
+    color: #fff;
+    background: rgba(255,255,255,0.07);
+    backdrop-filter: blur(3px);
+    transition: transform 0.12s ease, box-shadow 0.2s ease, background 0.25s, opacity 0.2s, border-color 0.25s;
+  }
+  button:hover:not(:disabled) { transform: translateY(-2px); }
+  button:active:not(:disabled) { transform: scale(0.94); }
+  button:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 3px;
+    box-shadow: 0 0 0 5px rgba(255,255,255,0.22);
+  }
+
+  #startStop {
+    flex: 1.3;
+    border-color: #ff9a56;
+    color: #fff3e6;
+    background: rgba(255, 154, 86, 0.16);
+    box-shadow: 0 0 16px rgba(255, 154, 86, 0.55), inset 0 0 14px rgba(255,154,86,0.12);
+  }
+  #startStop.running {
+    border-color: #ff3b5c;
+    color: #ffe6ea;
+    background: rgba(255, 59, 92, 0.2);
+    animation: runPulse 1.8s ease-in-out infinite;
+  }
+  @keyframes runPulse {
+    0%, 100% { box-shadow: 0 0 16px rgba(255, 59, 92, 0.55), inset 0 0 14px rgba(255,59,92,0.15); }
+    50% { box-shadow: 0 0 28px rgba(255, 59, 92, 0.85), inset 0 0 18px rgba(255,59,92,0.25); }
+  }
+
+  #lap {
+    border-color: #4fc3f7;
+    background: rgba(79, 195, 247, 0.12);
+    box-shadow: 0 0 14px rgba(79, 195, 247, 0.5), inset 0 0 12px rgba(79,195,247,0.1);
+  }
+
+  #reset {
+    border-color: #c88bd8;
+    background: rgba(200, 139, 216, 0.1);
+    box-shadow: 0 0 12px rgba(200, 139, 216, 0.4), inset 0 0 10px rgba(200,139,216,0.1);
+  }
+
+  button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+    animation: none;
+  }
+
+  .laps {
+    max-height: 150px;
+    overflow-y: auto;
+    text-align: left;
+    width: clamp(240px, 80vw, 300px);
+    margin: 0 auto;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.18);
+  }
+  .laps ol { padding-left: 20px; }
+  .laps li {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 5px 2px;
+    font-size: 0.9rem;
+    color: #e8d9ef;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 0 6px rgba(0,0,0,0.6);
+  }
+  .laps li .split { color: rgba(255,255,255,0.55); font-size: 0.82em; }
+  .laps li.fastest { color: #8ff0a4; }
+  .laps li.slowest { color: #ff8f9c; }
+  .laps::-webkit-scrollbar { width: 5px; }
+  .laps::-webkit-scrollbar-thumb { background: rgba(255,150,210,0.5); border-radius: 4px; }
+
+  @media (max-width: 420px) {
+    .content { padding: 24px 14px; }
+    .city-label { margin-bottom: 8px; }
+    .time-wrap { margin-bottom: 18px; }
+    .buttons { margin-bottom: 14px; }
+  }
+  @media (max-height: 680px) {
+    .time-wrap { width: clamp(170px, 46vh, 260px); height: clamp(170px, 46vh, 260px); margin-bottom: 16px; }
+    .hint { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="scene">
+  <div class="stars"></div>
+  <div class="haze"></div>
+  <div class="moonglow"></div>
+  <div class="clouds">
+    <div class="cloud c1"></div>
+    <div class="cloud c2"></div>
+    <div class="cloud c3"></div>
+  </div>
+
+  <div class="skyline-wrap">
+    <div class="skyline-far" id="farBuildings"></div>
+    <div id="midBuildings"></div>
+
+    <svg class="towers" viewBox="0 0 1200 500" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="towerBody" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#241233"/>
+          <stop offset="100%" stop-color="#07030f"/>
+        </linearGradient>
+      </defs>
+
+      <!-- Jin Mao -->
+      <g class="tower-glow">
+        <polygon points="230,500 230,260 240,230 245,210 250,190 255,210 260,230 270,260 270,500" fill="url(#towerBody)"/>
+        <rect x="246" y="150" width="8" height="45" fill="url(#towerBody)"/>
+      </g>
+
+      <!-- Shanghai Tower (twisted) -->
+      <g class="tower-glow">
+        <path d="M555,500 L560,240 Q575,150 600,95 Q625,150 640,240 L645,500 Z" fill="url(#towerBody)"/>
+        <rect x="596" y="55" width="8" height="45" fill="url(#towerBody)"/>
+        <circle cx="600" cy="50" r="4" fill="#9ad6ff"/>
+      </g>
+
+      <!-- Oriental Pearl Tower -->
+      <g class="tower-glow">
+        <rect x="388" y="330" width="14" height="170" fill="url(#towerBody)"/>
+        <circle cx="395" cy="300" r="30" fill="url(#towerBody)"/>
+        <rect x="391" y="210" width="8" height="90" fill="url(#towerBody)"/>
+        <circle cx="395" cy="185" r="17" fill="url(#towerBody)"/>
+        <rect x="393" y="110" width="4" height="78" fill="url(#towerBody)"/>
+        <g class="beacon-light" style="transform-origin: 395px 185px;">
+          <rect x="393" y="160" width="4" height="50" fill="#ff5e8f" opacity="0.9"/>
+        </g>
+        <circle cx="395" cy="300" r="4" fill="#ff5e8f"/>
+        <circle cx="395" cy="185" r="3" fill="#4fc3f7"/>
+      </g>
+
+      <!-- SWFC (bottle opener) -->
+      <g class="tower-glow">
+        <path d="M700,500 L700,260 L714,225 L720,205 L726,225 L740,260 L740,500 Z" fill="url(#towerBody)"/>
+        <rect x="713" y="300" width="14" height="36" fill="#1b0e2b"/>
+      </g>
+    </svg>
+  </div>
+
+  <div class="river">
+    <div class="river-shimmer"></div>
+    <div id="boatLights"></div>
+  </div>
+
+  <div id="particles"></div>
+</div>
+
+<div class="content">
+  <div class="city-label">Shanghai · 外滩</div>
+
+  <div class="time-wrap">
+    <svg class="ring-svg" viewBox="0 0 260 260">
+      <defs>
+        <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#ff5e8f"/>
+          <stop offset="50%" stop-color="#ff9a56"/>
+          <stop offset="100%" stop-color="#4fc3f7"/>
+        </linearGradient>
+      </defs>
+      <circle class="ring-track" cx="130" cy="130" r="122"/>
+      <circle class="ring-progress" id="ringProgress" cx="130" cy="130" r="122"
+        stroke-dasharray="766.5" stroke-dashoffset="766.5"/>
+    </svg>
+    <div class="ring-dot" id="ringDot"></div>
+    <div class="time" id="display" role="timer" aria-live="off">
+      <div>00:00:00</div>
+      <div class="ms">.00</div>
+    </div>
+  </div>
+
+  <div class="buttons">
+    <button id="startStop" aria-label="시작 또는 정지 (Space)">시작</button>
+    <button id="lap" disabled aria-label="랩 기록 (L)">랩</button>
+    <button id="reset" disabled aria-label="초기화 (R)">리셋</button>
+  </div>
+  <div class="hint"><kbd>Space</kbd> 시작/정지 &nbsp; <kbd>L</kbd> 랩 &nbsp; <kbd>R</kbd> 리셋</div>
+  <div class="laps">
+    <ol id="lapList"></ol>
+  </div>
+</div>
+
+<script>
+  /* ---------- 배경 생성: 먼 건물 ---------- */
+  const far = document.getElementById('farBuildings');
+  for (let i = 0; i < 14; i++) {
+    const w = 3 + Math.random() * 4;
+    const h = 20 + Math.random() * 40;
+    const div = document.createElement('div');
+    div.className = 'b';
+    div.style.left = (i * 7 + Math.random() * 3) + '%';
+    div.style.width = w + '%';
+    div.style.height = h + '%';
+    far.appendChild(div);
+  }
+
+  /* ---------- 배경 생성: 중간 건물 (반짝임) ---------- */
+  const mid = document.getElementById('midBuildings');
+  const midCount = 22;
+  for (let i = 0; i < midCount; i++) {
+    const w = 2.2 + Math.random() * 2.3;
+    const h = 18 + Math.random() * 55;
+    const div = document.createElement('div');
+    div.className = 'building';
+    div.style.left = (i * (100 / midCount) + Math.random() * 2) + '%';
+    div.style.width = w + '%';
+    div.style.height = h + '%';
+    div.style.animationDelay = (-Math.random() * 5) + 's';
+    div.style.animationDuration = (4 + Math.random() * 4) + 's';
+    mid.appendChild(div);
+  }
+
+  /* ---------- 강 위의 배 불빛 ---------- */
+  const boats = document.getElementById('boatLights');
+  for (let i = 0; i < 4; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'boat-light';
+    dot.style.top = (20 + Math.random() * 50) + '%';
+    dot.style.animationDuration = (18 + Math.random() * 14) + 's';
+    dot.style.animationDelay = (-Math.random() * 20) + 's';
+    boats.appendChild(dot);
+  }
+
+  /* ---------- 떠오르는 불빛 입자 ---------- */
+  const particles = document.getElementById('particles');
+  for (let i = 0; i < 18; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = 2 + Math.random() * 3;
+    p.style.width = size + 'px';
+    p.style.height = size + 'px';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.bottom = '0';
+    p.style.animationDuration = (10 + Math.random() * 14) + 's';
+    p.style.animationDelay = (-Math.random() * 20) + 's';
+    particles.appendChild(p);
+  }
+
+  /* ---------- 스탑워치 로직 ---------- */
+  let startTime = 0;
+  let elapsed = 0;
+  let rafId = null;
+  let running = false;
+  let lapSplits = [];
+
+  const display = document.getElementById('display');
+  const startStopBtn = document.getElementById('startStop');
+  const resetBtn = document.getElementById('reset');
+  const lapBtn = document.getElementById('lap');
+  const lapList = document.getElementById('lapList');
+  const ringProgress = document.getElementById('ringProgress');
+  const ringDot = document.getElementById('ringDot');
+  const timeWrap = document.querySelector('.time-wrap');
+  const RING_CIRCUMFERENCE = 2 * Math.PI * 122;
+  let ringDotRadius = 112;
+  function updateRingDotRadius() {
+    ringDotRadius = timeWrap.getBoundingClientRect().width / 2 * (122 / 130);
+  }
+  updateRingDotRadius();
+  window.addEventListener('resize', updateRingDotRadius);
+
+  function formatTime(ms) {
+    const totalMs = Math.floor(ms);
+    const hours = Math.floor(totalMs / 3600000);
+    const minutes = Math.floor((totalMs % 3600000) / 60000);
+    const seconds = Math.floor((totalMs % 60000) / 1000);
+    const centis = Math.floor((totalMs % 1000) / 10);
+    const pad = (n, len = 2) => String(n).padStart(len, '0');
+    return {
+      main: `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`,
+      ms: pad(centis)
+    };
+  }
+
+  function updateDisplay() {
+    const now = Date.now();
+    const current = elapsed + (running ? now - startTime : 0);
+    const { main, ms } = formatTime(current);
+    display.innerHTML = `<div>${main}</div><div class="ms">.${ms}</div>`;
+
+    const frac = (current % 60000) / 60000;
+    const offset = RING_CIRCUMFERENCE * (1 - frac);
+    ringProgress.setAttribute('stroke-dashoffset', offset);
+    ringDot.style.transform = `rotate(${frac * 360}deg) translateY(-${ringDotRadius}px)`;
+  }
+
+  function tick() {
+    updateDisplay();
+    rafId = requestAnimationFrame(tick);
+  }
+
+  startStopBtn.addEventListener('click', () => {
+    if (!running) {
+      running = true;
+      startTime = Date.now();
+      startStopBtn.textContent = '정지';
+      startStopBtn.classList.add('running');
+      lapBtn.disabled = false;
+      resetBtn.disabled = false;
+      tick();
+    } else {
+      running = false;
+      elapsed += Date.now() - startTime;
+      startStopBtn.textContent = '시작';
+      startStopBtn.classList.remove('running');
+      lapBtn.disabled = true;
+      cancelAnimationFrame(rafId);
+      updateDisplay();
+    }
+  });
+
+  resetBtn.addEventListener('click', () => {
+    running = false;
+    elapsed = 0;
+    lapSplits = [];
+    cancelAnimationFrame(rafId);
+    startStopBtn.textContent = '시작';
+    startStopBtn.classList.remove('running');
+    lapBtn.disabled = true;
+    resetBtn.disabled = true;
+    lapList.innerHTML = '';
+    updateDisplay();
+  });
+
+  function renderLaps() {
+    lapList.innerHTML = '';
+    const splitValues = lapSplits.map(l => l.split);
+    const fastest = Math.min(...splitValues);
+    const slowest = Math.max(...splitValues);
+    const hasRange = lapSplits.length > 1 && fastest !== slowest;
+
+    for (let i = lapSplits.length - 1; i >= 0; i--) {
+      const { cumulative, split } = lapSplits[i];
+      const cum = formatTime(cumulative);
+      const spl = formatTime(split);
+      const li = document.createElement('li');
+      if (hasRange && split === fastest) li.classList.add('fastest');
+      else if (hasRange && split === slowest) li.classList.add('slowest');
+      li.innerHTML = `<span>랩 ${i + 1} · ${cum.main}.${cum.ms}</span><span class="split">+${spl.main}.${spl.ms}</span>`;
+      lapList.appendChild(li);
+    }
+  }
+
+  lapBtn.addEventListener('click', () => {
+    const now = Date.now();
+    const current = elapsed + (running ? now - startTime : 0);
+    const prevCumulative = lapSplits.length ? lapSplits[lapSplits.length - 1].cumulative : 0;
+    lapSplits.push({ cumulative: current, split: current - prevCumulative });
+    renderLaps();
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') {
+      e.preventDefault();
+      startStopBtn.click();
+    } else if (e.key.toLowerCase() === 'l' && !lapBtn.disabled) {
+      lapBtn.click();
+    } else if (e.key.toLowerCase() === 'r' && !resetBtn.disabled) {
+      resetBtn.click();
+    }
+  });
+
+  updateDisplay();
+</script>
+
+</body>
+</html>
